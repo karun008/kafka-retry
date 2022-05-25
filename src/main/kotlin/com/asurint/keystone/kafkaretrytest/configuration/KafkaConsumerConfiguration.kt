@@ -2,6 +2,7 @@ package com.asurint.keystone.kafkaretrytest.configuration
 
 
 import com.course.avro.data.GetClient
+import io.confluent.kafka.serializers.KafkaAvroSerializer
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -41,10 +42,10 @@ class KafkaConsumerConfiguration {
     //lateinit var kafkaTemplate: KafkaTemplate<String?, String>
 
     @Value("\${topics.retry}")
-    private val retryTopic: String? = "local.accounts.retry"
+    private val retryTopic: String? = "local.accounts-2.retry"
 
     @Value("\${topics.dlt}")
-    private val deadLetterTopic: String? = "local.accounts"
+    private val deadLetterTopic: String? = "local.accounts-2.dlq"
 
 
     var consumerRecordRecoverer = ConsumerRecordRecoverer { consumerRecord: ConsumerRecord<*, *>?, e: Exception ->
@@ -74,7 +75,7 @@ class KafkaConsumerConfiguration {
         val configProps: MutableMap<String, Any> = HashMap()
         configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
         configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
-        configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
+        configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = KafkaAvroSerializer::class.java
         return DefaultKafkaProducerFactory(configProps)
     }
 
