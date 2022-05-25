@@ -1,6 +1,7 @@
 package com.asurint.keystone.kafkaretrytest.configuration
 
 
+import com.course.avro.data.GetClient
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -26,7 +27,7 @@ import org.springframework.util.backoff.FixedBackOff
 const val BACK_OFF_PERIOD: Long = 1000L // should not be longer than max.poll.interval.ms
 const val MAX_ATTEMPTS: Int = 1
 
-private fun buildProducerRecord(key: String?, value: String, topic: String): ProducerRecord<String?, String>? {
+private fun buildProducerRecord(key: String?, value: GetClient, topic: String): ProducerRecord<String?, GetClient>? {
 //add headers if needed
     return ProducerRecord(topic, null, key, value, null)
 }
@@ -48,7 +49,7 @@ class KafkaConsumerConfiguration {
 
     var consumerRecordRecoverer = ConsumerRecordRecoverer { consumerRecord: ConsumerRecord<*, *>?, e: Exception ->
         logger.info("Exception in consumerRecordRecoverer : {} ", e.message, e)
-        val record = consumerRecord as ConsumerRecord<String?, String>?
+        val record = consumerRecord as ConsumerRecord<String?, GetClient>?
         if (e.cause is RecoverableDataAccessException) {
             //recovery logic
             logger.info("Inside Recovery")
@@ -69,7 +70,7 @@ class KafkaConsumerConfiguration {
     }
 
     @Bean
-    fun producerFactory(): DefaultKafkaProducerFactory<String, String> {
+    fun producerFactory(): DefaultKafkaProducerFactory<String, GetClient> {
         val configProps: MutableMap<String, Any> = HashMap()
         configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
         configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
@@ -78,7 +79,7 @@ class KafkaConsumerConfiguration {
     }
 
     @Bean
-    fun kafkaTemplate(): KafkaTemplate<String?, String> {
+    fun kafkaTemplate(): KafkaTemplate<String?, GetClient> {
         return KafkaTemplate(producerFactory())
     }
 
