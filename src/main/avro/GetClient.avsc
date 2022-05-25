@@ -1,0 +1,24 @@
+{
+  "type": "record",
+  "namespace": "com.course.avro.data",
+  "name": "GetClient",
+  "doc": "Sample default value",
+  "fields": [
+    {
+      "name": "fullName",
+      "type": "string"
+    },
+    {
+      "name": "maritalStatus",
+      "type": "string",
+      "default": "UNKNOWN"
+    },
+    {
+      "name": "active",
+      "type": "boolean",
+      "default": false
+    }
+  ]
+}
+
+//{"type":"record","name":"GetClient","namespace":"com.asurint.models.accounts.queries","fields":[{"name":"metadata","type":[{"type":"record","name":"MessageMetadata","namespace":"com.asurint.models","fields":[{"name":"correlationId","type":["null",{"type":"string","avro.java.string":"String"}],"doc":"Identifier for tracing/correlating messages that comprise a logical path through the system","default":null},{"name":"uniqueMessageId","type":["null",{"type":"string","avro.java.string":"String"}],"doc":"Unique identifier for this particular message in the system, as distinct from all other messages","default":null},{"name":"isMockMessage","type":["null","boolean"],"doc":"Flag used to either have an integration perform a query, or to request a mock response from the system. A null value should be interpreted as false.","default":null},{"name":"largeMessageKey","type":["null",{"type":"string","avro.java.string":"String"}],"doc":"If present, points to where the consumer can download the payload of a large message","default":null}]},"null"],"default":{}},{"name":"context","type":[{"type":"record","name":"QueryContext","namespace":"com.asurint.models","fields":[{"name":"requestId","type":["null",{"type":"string","avro.java.string":"String"}],"default":null}]},"null"],"default":{}},{"name":"payload","type":[{"type":"record","name":"GetClientPayload","fields":[{"name":"id","type":["null",{"type":"string","avro.java.string":"String"}],"default":null}]},"null"],"default":{}}]}
