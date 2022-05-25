@@ -26,7 +26,7 @@ sourceSets {
 }
 //java.sourceSets.create("src/main/avro")
 dependencies {
-	//implementation("org.springframework.boot:spring-data-jpa")
+	//implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	implementation("org.springframework.boot:spring-boot-starter")
 	implementation("io.github.microutils:kotlin-logging-jvm:2.1.21")
 	implementation("org.apache.logging.log4j:log4j-core:2.17.0")
