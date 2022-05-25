@@ -7,6 +7,8 @@ import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.springframework.kafka.listener.DeadLetterPublishingRecoverer
+
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -17,7 +19,10 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.dao.RecoverableDataAccessException
 import org.springframework.kafka.annotation.EnableKafka
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
-import org.springframework.kafka.core.*
+import org.springframework.kafka.core.ConsumerFactory
+import org.springframework.kafka.core.DefaultKafkaConsumerFactory
+import org.springframework.kafka.core.DefaultKafkaProducerFactory
+import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.listener.ConsumerRecordRecoverer
 import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.listener.RetryListener
@@ -55,6 +60,7 @@ class KafkaConsumerConfiguration {
                 kafkaTemplate().send(producerRecord)
             }
             //failureService.saveFailedRecord(record, e, com.learnkafka.config.LibraryEventsConsumerConfig.RETRY)
+           // failureService!!.saveFailedRecord(record, e, retryTopic)
         } else {
             // non-recovery logic
             logger.info("Inside Non-Recovery")
@@ -94,10 +100,10 @@ class KafkaConsumerConfiguration {
         expBackOff.multiplier = 4.0
         expBackOff.maxInterval = 40000L
 
-        val errorHandler1 = DefaultErrorHandler(
-            consumerRecordRecoverer,
-            expBackOff
-        )
+        var defaultKafkaProducerFactory:DefaultKafkaProducerFactory<String, String>
+            = DefaultKafkaProducerFactory(kafkaProperties.buildProducerProperties())
+
+        val errorHandler1 = DefaultErrorHandler(DeadLetterPublishingRecoverer( kafkaTemplate()), expBackOff)
 
         //exceptionsToIgnoreList.forEach(errorHandler::addNotRetryableExceptions);
         //exceptionsToRetryList.forEach(errorHandler::addRetryableExceptions)

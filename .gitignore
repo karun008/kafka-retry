@@ -35,4 +35,8 @@ out/
 
 ### VS Code ###
 .vscode/
+.DS_Store
 gradle/
+logs/
+src/.DS_Store
+src/main/.DS_Store
