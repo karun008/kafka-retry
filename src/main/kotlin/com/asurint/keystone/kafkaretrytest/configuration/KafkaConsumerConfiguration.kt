@@ -73,7 +73,7 @@ class KafkaConsumerConfiguration {
     @Bean
     fun producerFactory(): DefaultKafkaProducerFactory<String, GetClient> {
         val configProps: MutableMap<String, Any> = HashMap()
-        configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
+        configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:29092"
         configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
         configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = KafkaAvroSerializer::class.java
         return DefaultKafkaProducerFactory(configProps)
@@ -113,11 +113,11 @@ class KafkaConsumerConfiguration {
         return errorHandler1
     }
     @Bean
-    fun consumerFactory(properties: KafkaProperties): ConsumerFactory<String?, String?> =
+    fun consumerFactory(properties: KafkaProperties): ConsumerFactory<String?, GetClient?> =
         DefaultKafkaConsumerFactory(properties.buildConsumerProperties())
     @Bean
-    fun kafkaListenerContainerFactory(properties: KafkaProperties): ConcurrentKafkaListenerContainerFactory<String?, String?> {
-        val factory = ConcurrentKafkaListenerContainerFactory<String?, String?>()
+    fun kafkaListenerContainerFactory(properties: KafkaProperties): ConcurrentKafkaListenerContainerFactory<String?, GetClient?> {
+        val factory = ConcurrentKafkaListenerContainerFactory<String?, GetClient?>()
         factory.consumerFactory = consumerFactory(properties)
         factory.setCommonErrorHandler(errorHandler(properties)!!)
         return factory
