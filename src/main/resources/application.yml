@@ -15,13 +15,13 @@ spring:
     template:
       default-topic: local.accounts
     consumer:
-      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+      bootstrap-servers: localhost:9092
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       group-id: events-listener-group
     producer:
       bootstrap-servers:
-        -   localhost:9092,localhost:9093,localhost:9094
+        -   localhost:9092
       key-serializer: org.apache.kafka.common.serialization.StringDeserializer
       value-serializer: org.apache.kafka.common.serialization.StringDeserializer
     properties:

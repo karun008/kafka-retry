@@ -2,8 +2,9 @@ package com.asurint.keystone.kafkaretrytest.configuration
 
 
 import org.apache.kafka.clients.consumer.ConsumerRecord
+import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.TopicPartition
+import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
@@ -14,16 +15,12 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.dao.RecoverableDataAccessException
 import org.springframework.kafka.annotation.EnableKafka
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
-import org.springframework.kafka.core.ConsumerFactory
-import org.springframework.kafka.core.DefaultKafkaConsumerFactory
-import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.kafka.core.*
 import org.springframework.kafka.listener.ConsumerRecordRecoverer
-import org.springframework.kafka.listener.DeadLetterPublishingRecoverer
 import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.listener.RetryListener
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries
 import org.springframework.util.backoff.FixedBackOff
-import java.util.function.BiFunction
 
 
 const val BACK_OFF_PERIOD: Long = 1000L // should not be longer than max.poll.interval.ms
@@ -39,8 +36,8 @@ private fun buildProducerRecord(key: String?, value: String, topic: String): Pro
 class KafkaConsumerConfiguration {
     private val logger: Logger = LoggerFactory.getLogger(KafkaConsumerConfiguration::class.java)
 
-    @Autowired
-    lateinit var kafkaTemplate: KafkaTemplate<String?, String>
+    //@Autowired
+    //lateinit var kafkaTemplate: KafkaTemplate<String?, String>
 
     @Value("\${topics.retry}")
     private val retryTopic: String? = "local.accounts.retry"
@@ -56,22 +53,34 @@ class KafkaConsumerConfiguration {
             //recovery logic
             logger.info("Inside Recovery")
             var producerRecord = record?.let { buildProducerRecord(it.key(), it.value(), retryTopic!!) }
-           // if (producerRecord != null) {
-            //    kafkaTemplate.send(producerRecord)
-            //}
+            if (producerRecord != null) {
+                kafkaTemplate().send(producerRecord)
+            }
              //failureService.saveFailedRecord(record, e, com.learnkafka.config.LibraryEventsConsumerConfig.RETRY)
         } else {
             // non-recovery logic
             logger.info("Inside Non-Recovery")
-           // var producerRecord = record?.let { buildProducerRecord(it.key(), it.value(), deadLetterTopic!!) }
-           // if (producerRecord != null) {
-            //    kafkaTemplate.send(producerRecord)
-           // }
+            var producerRecord = record?.let { buildProducerRecord(it.key(), it.value(), deadLetterTopic!!) }
+            if (producerRecord != null) {
+                kafkaTemplate().send(producerRecord)
+            }
             //failureService.saveFailedRecord(record, e, com.learnkafka.config.LibraryEventsConsumerConfig.DEAD)
         }
     }
 
+    @Bean
+    fun producerFactory(): DefaultKafkaProducerFactory<String, String> {
+        val configProps: MutableMap<String, Any> = HashMap()
+        configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
+        configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
+        configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
+        return DefaultKafkaProducerFactory(configProps)
+    }
 
+    @Bean
+    fun kafkaTemplate(): KafkaTemplate<String?, String> {
+        return KafkaTemplate(producerFactory())
+    }
 
     fun errorHandler(kafkaProperties: KafkaProperties): DefaultErrorHandler? {
        /* val exceptionsToIgnoreList: Unit = List.of(
@@ -85,6 +94,7 @@ class KafkaConsumerConfiguration {
         expBackOff.initialInterval = 1000L
         expBackOff.multiplier = 4.0
         expBackOff.maxInterval = 40000L
+
         val errorHandler1 = DefaultErrorHandler(
             consumerRecordRecoverer,
             expBackOff
