@@ -14,8 +14,9 @@ class KafkaConsumer() {
     private val logger: Logger = LoggerFactory.getLogger(KafkaConsumer::class.java)
 
     @KafkaListener(topics = ["local.accounts"])
-    fun listenRetry(record: ConsumerRecord<String, GetClient>) {
+    fun listenRetry(record: ConsumerRecord<String, String>) {
         logger.info("received 'test-retry' record! (value: ${record.value()})")
+
         throw RecoverableDataAccessException("Temporary Network Issue")
        // logger.info("correlation id : ${record.value().metadata.correlationId}");
        /* val libraryEventOptional: Optional<LibraryEvent> =
