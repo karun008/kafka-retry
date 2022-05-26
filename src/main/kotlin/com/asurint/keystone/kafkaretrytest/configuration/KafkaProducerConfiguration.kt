@@ -6,7 +6,6 @@ import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import org.apache.avro.generic.GenericRecord
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
-import org.apache.kafka.common.internals.Topic
 import org.apache.kafka.common.serialization.StringSerializer
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration

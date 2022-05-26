@@ -1,8 +1,7 @@
 package com.asurint.keystone.kafkaretrytest.entity
 
-import org.apache.kafka.clients.consumer.ConsumerRecord
 //import org.springframework.data.repository.CrudRepository
-import org.springframework.stereotype.Service
+
 //import javax.persistence.GeneratedValue
 //
 //@Service

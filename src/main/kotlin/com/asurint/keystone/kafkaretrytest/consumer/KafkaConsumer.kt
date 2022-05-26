@@ -1,5 +1,6 @@
 package com.asurint.keystone.kafkaretrytest.consumer
 
+import com.course.avro.data.GetClient
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
