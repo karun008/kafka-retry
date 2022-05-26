@@ -2,7 +2,7 @@ spring:
   profiles:
     active: local
 server:
-  port: 8081
+  port: 8082
 topics:
   retry: 'local.accounts.retry'
   dlt: 'local.accounts.dlq'
@@ -15,30 +15,30 @@ spring:
     template:
       default-topic: local.accounts
     consumer:
-      bootstrap-servers: localhost:29092
+      bootstrap-servers: localhost:9092
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
       group-id: events-listener-group
       properties:
-        schema.registry.url: http://localhost:8085
+        schema.registry.url: http://localhost:8081
         specific.avro.reader: true
     producer:
       bootstrap-servers:
-        -   localhost:29092
+        -   localhost:9092
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
     properties:
-      schema.registry.url: http://localhost:8085
+      schema.registry.url: http://localhost:8081
       specific.avro.reader: true
   jpa:
     database: POSTGRESQL
     show-sql: true
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update #create-drop
   datasource:
-    url: jdbc:postgresql://localhost:5432/camunda
-    username: camunda
-    password: camunda
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: postgres
+    password: postgres
     driverClassName: org.postgresql.Driver
   sql:
     init:
