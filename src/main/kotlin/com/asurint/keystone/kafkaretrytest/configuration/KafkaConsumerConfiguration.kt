@@ -21,6 +21,7 @@ import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.dao.RecoverableDataAccessException
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.kafka.annotation.EnableKafka
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.core.ConsumerFactory
@@ -44,6 +45,7 @@ private fun buildProducerRecord(key: String?, value: GetClient, topic: String): 
 
 @Configuration
 @EnableKafka
+@EnableJpaRepositories(basePackages = arrayOf("com.asurint.keystone.kafkaretrytest.entity"))
 class KafkaConsumerConfiguration {
     private val logger: Logger = LoggerFactory.getLogger(KafkaConsumerConfiguration::class.java)
 

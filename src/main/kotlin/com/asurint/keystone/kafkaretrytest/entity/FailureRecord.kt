@@ -8,13 +8,15 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
 import org.springframework.stereotype.Service
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
+import javax.persistence.*
+import javax.transaction.Transactional
 
 @Service
 class FailureService() {
     @Autowired
     lateinit var failureRecordRepository: FailureRecordRepository
+
+    @Transactional
     fun saveFailedRecord(consumerRecord: ConsumerRecord<String?, GetClient>, e: Exception, status: String?) {
         val failureRecord = FailureRecord(
             null,
@@ -30,14 +32,16 @@ class FailureService() {
     }
 }
 
+@Repository
 interface FailureRecordRepository : CrudRepository<FailureRecord?, Int?> {
     fun findAllByStatus(retry: String?): List<FailureRecord?>?
 }
 
 @Entity
+@Table(name = "FAILURERECORD")
 data class FailureRecord (
-    @javax.persistence.Id
-    @GeneratedValue
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     val id: Int? = null,
     val topic: String? = null,
     val topickey: String? = null,

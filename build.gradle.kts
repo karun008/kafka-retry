@@ -27,7 +27,7 @@ sourceSets {
 //java.sourceSets.create("src/main/avro")
 dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-	runtimeOnly("com.h2database:h2:2.1.212")
+	implementation("com.h2database:h2:2.1.212")
 	implementation("org.postgresql:postgresql:42.3.5")
 	implementation("org.jetbrains.kotlin:kotlin-reflect:1.1.51")
 	implementation("org.springframework.boot:spring-boot-starter")

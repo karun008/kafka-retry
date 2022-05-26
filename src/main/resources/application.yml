@@ -2,7 +2,7 @@ spring:
   profiles:
     active: local
 server:
-  port: 8082
+  port: 8081
 topics:
   retry: 'local.accounts.retry'
   dlt: 'local.accounts.dlq'
@@ -31,14 +31,16 @@ spring:
       schema.registry.url: http://localhost:8085
       specific.avro.reader: true
   jpa:
-    database: h2
-    database-platform: org.hibernate.dialect.H2Dialect
-    generate-ddl: true
-    hibernate:
-      ddl-auto: update
+    database: POSTGRESQL
     show-sql: true
-  h2:
-    console:
-      path: /h2-console
-      enabled: true
+    hibernate:
+      ddl-auto: create-drop
+  datasource:
+    url: jdbc:postgresql://localhost:5432/camunda
+    username: camunda
+    password: camunda
+    driverClassName: org.postgresql.Driver
+  sql:
+    init:
+      platform: postgres
 
