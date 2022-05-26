@@ -1,7 +1,9 @@
 package com.asurint.keystone.kafkaretrytest.configuration
 
 
-//import com.asurint.keystone.kafkaretrytest.entity.FailureService
+import com.course.avro.data.GetClient
+import io.confluent.kafka.serializers.KafkaAvroSerializer
+import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
@@ -10,7 +12,6 @@ import org.springframework.kafka.listener.DeadLetterPublishingRecoverer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.context.annotation.Bean
@@ -32,7 +33,7 @@ import org.springframework.util.backoff.FixedBackOff
 const val BACK_OFF_PERIOD: Long = 1000L // should not be longer than max.poll.interval.ms
 const val MAX_ATTEMPTS: Int = 1
 
-private fun buildProducerRecord(key: String?, value: String, topic: String): ProducerRecord<String?, String>? {
+private fun buildProducerRecord(key: String?, value: GetClient, topic: String): ProducerRecord<String?, GetClient>? {
 //add headers if needed
     return ProducerRecord(topic, null, key, value, null)
 }
@@ -42,21 +43,15 @@ private fun buildProducerRecord(key: String?, value: String, topic: String): Pro
 class KafkaConsumerConfiguration {
     private val logger: Logger = LoggerFactory.getLogger(KafkaConsumerConfiguration::class.java)
 
-    //@Autowired
-    //lateinit var kafkaTemplate: KafkaTemplate<String?, String>
-
     @Value("\${topics.retry}")
     private val retryTopic: String? = "local.accounts.retry"
 
     @Value("\${topics.dlt}")
-    private val deadLetterTopic: String? = "local.accounts"
-
-   // @Autowired
-   // var failureService: FailureService? = null
+    private val deadLetterTopic: String? = "local.accounts.dlq"
 
     var consumerRecordRecoverer = ConsumerRecordRecoverer { consumerRecord: ConsumerRecord<*, *>?, e: Exception ->
         logger.info("Exception in consumerRecordRecoverer : {} ", e.message, e)
-        val record = consumerRecord as ConsumerRecord<String?, String>?
+        val record = consumerRecord as ConsumerRecord<String?, GetClient>?
         if (e.cause is RecoverableDataAccessException) {
             //recovery logic
             logger.info("Inside Recovery")
@@ -64,6 +59,7 @@ class KafkaConsumerConfiguration {
             if (producerRecord != null) {
                 kafkaTemplate().send(producerRecord)
             }
+            //failureService.saveFailedRecord(record, e, com.learnkafka.config.LibraryEventsConsumerConfig.RETRY)
            // failureService!!.saveFailedRecord(record, e, retryTopic)
         } else {
             // non-recovery logic
@@ -77,21 +73,22 @@ class KafkaConsumerConfiguration {
     }
 
     @Bean
-    fun producerFactory(): DefaultKafkaProducerFactory<String, String> {
+    fun producerFactory(): DefaultKafkaProducerFactory<String, GetClient> {
         val configProps: MutableMap<String, Any> = HashMap()
         configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
         configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
-        configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
+        configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = KafkaAvroSerializer::class.java
+        configProps[KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG] = "http://localhost:8085"
         return DefaultKafkaProducerFactory(configProps)
     }
 
     @Bean
-    fun kafkaTemplate(): KafkaTemplate<String?, String> {
+    fun kafkaTemplate(): KafkaTemplate<String?, GetClient> {
         return KafkaTemplate(producerFactory())
     }
 
     fun errorHandler(kafkaProperties: KafkaProperties): DefaultErrorHandler? {
-       /* val exceptionsToIgnoreList: Unit = List.of(
+        /* val exceptionsToIgnoreList: Unit = List.of(
             IllegalArgumentException::class.java
         )
         val exceptionsToRetryList: Unit = List.of(
@@ -112,33 +109,24 @@ class KafkaConsumerConfiguration {
         //exceptionsToRetryList.forEach(errorHandler::addRetryableExceptions)
         errorHandler1
             .setRetryListeners(RetryListener { record: ConsumerRecord<*, *>?, ex: Exception, deliveryAttempt: Int ->
-                logger.info( "Failed Record in Retry Listener, Exception : {} , deliveryAttempt : {} ",
+                logger.info(
+                    "Failed Record in Retry Listener, Exception : {} , deliveryAttempt : {} ",
                     ex.message,
-                    deliveryAttempt)
+                    deliveryAttempt
+                )
             })
         return errorHandler1
     }
+
     @Bean
-    fun consumerFactory(properties: KafkaProperties): ConsumerFactory<String?, String?> =
+    fun consumerFactory(properties: KafkaProperties): ConsumerFactory<String?, GetClient?> =
         DefaultKafkaConsumerFactory(properties.buildConsumerProperties())
+
     @Bean
-    fun kafkaListenerContainerFactory(properties: KafkaProperties): ConcurrentKafkaListenerContainerFactory<String?, String?> {
-        val factory = ConcurrentKafkaListenerContainerFactory<String?, String?>()
+    fun kafkaListenerContainerFactory(properties: KafkaProperties): ConcurrentKafkaListenerContainerFactory<String?, GetClient?> {
+        val factory = ConcurrentKafkaListenerContainerFactory<String?, GetClient?>()
         factory.consumerFactory = consumerFactory(properties)
         factory.setCommonErrorHandler(errorHandler(properties)!!)
         return factory
     }
-/*
-    @Bean
-    fun kafkaListenerContainerFactory(
-        configurer: ConcurrentKafkaListenerContainerFactoryConfigurer,
-        kafkaConsumerFactory: ConsumerFactory<Any?, Any?>?
-    ): ConcurrentKafkaListenerContainerFactory<*, *>? {
-        val factory = ConcurrentKafkaListenerContainerFactory<Any, Any>()
-        configurer.configure(factory, kafkaConsumerFactory)
-        factory.setConcurrency(1)
-        factory.setCommonErrorHandler(errorHandler()!!)
-        // factory.getContainerProperties().setAckMode(ContainerProperties.AckMode.MANUAL);
-        return factory
-    }*/
 }
