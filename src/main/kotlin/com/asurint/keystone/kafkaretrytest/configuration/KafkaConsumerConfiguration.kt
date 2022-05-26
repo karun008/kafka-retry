@@ -1,6 +1,9 @@
 package com.asurint.keystone.kafkaretrytest.configuration
 
 
+import com.asurint.keystone.kafkaretrytest.entity.FailureRecord
+import com.asurint.keystone.kafkaretrytest.entity.FailureRecordRepository
+import com.asurint.keystone.kafkaretrytest.entity.FailureService
 import com.course.avro.data.GetClient
 import io.confluent.kafka.serializers.KafkaAvroSerializer
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
@@ -10,11 +13,13 @@ import org.apache.kafka.clients.producer.ProducerRecord
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.dao.RecoverableDataAccessException
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories
 import org.springframework.kafka.annotation.EnableKafka
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory
 import org.springframework.kafka.core.ConsumerFactory
@@ -39,8 +44,12 @@ private fun buildProducerRecord(key: String?, value: GetClient, topic: String): 
 
 @Configuration
 @EnableKafka
+@EnableJpaRepositories(basePackages = arrayOf("com.asurint.keystone.kafkaretrytest.entity"))
 class KafkaConsumerConfiguration {
     private val logger: Logger = LoggerFactory.getLogger(KafkaConsumerConfiguration::class.java)
+
+    @Autowired
+    private lateinit var failureService: FailureService
 
     @Value("\${topics.retry}")
     private val retryTopic: String? = "local.accounts.retry"
@@ -48,9 +57,9 @@ class KafkaConsumerConfiguration {
     @Value("\${topics.dlt}")
     private val deadLetterTopic: String? = "local.accounts.dlq"
 
-    var consumerRecordRecoverer = ConsumerRecordRecoverer { consumerRecord: ConsumerRecord<*, *>?, e: Exception ->
+    var consumerRecordRecoverer = ConsumerRecordRecoverer { consumerRecord: ConsumerRecord<*, *>, e: Exception ->
         logger.info("Exception in consumerRecordRecoverer : {} ", e.message, e)
-        val record = consumerRecord as ConsumerRecord<String?, GetClient>?
+        val record = consumerRecord as ConsumerRecord<String?, GetClient>
         if (e.cause is RecoverableDataAccessException) {
             //recovery logic
             logger.info("Inside Recovery")
@@ -58,8 +67,7 @@ class KafkaConsumerConfiguration {
             if (producerRecord != null) {
                 kafkaTemplate().send(producerRecord)
             }
-            //failureService.saveFailedRecord(record, e, com.learnkafka.config.LibraryEventsConsumerConfig.RETRY)
-           // failureService!!.saveFailedRecord(record, e, retryTopic)
+            failureService.saveFailedRecord(record, e, retryTopic)
         } else {
             // non-recovery logic
             logger.info("Inside Non-Recovery")
@@ -67,14 +75,14 @@ class KafkaConsumerConfiguration {
             if (producerRecord != null) {
                 kafkaTemplate().send(producerRecord)
             }
-            //failureService.saveFailedRecord(record, e, com.learnkafka.config.LibraryEventsConsumerConfig.DEAD)
+            failureService.saveFailedRecord(record, e, deadLetterTopic)
         }
     }
 
     @Bean
     fun producerFactory(): DefaultKafkaProducerFactory<String, GetClient> {
         val configProps: MutableMap<String, Any> = HashMap()
-        configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
+        configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:29092"
         configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
         configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = KafkaAvroSerializer::class.java
         configProps[KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG] = "http://localhost:8085"
@@ -102,8 +110,11 @@ class KafkaConsumerConfiguration {
         var defaultKafkaProducerFactory:DefaultKafkaProducerFactory<String, String>
             = DefaultKafkaProducerFactory(kafkaProperties.buildProducerProperties())
 
-        val errorHandler1 = DefaultErrorHandler(DeadLetterPublishingRecoverer( kafkaTemplate()), expBackOff)
-
+        //val errorHandler1 = DefaultErrorHandler(DeadLetterPublishingRecoverer( kafkaTemplate()), expBackOff)
+        val errorHandler1 = DefaultErrorHandler(
+            consumerRecordRecoverer,
+            expBackOff
+        )
         //exceptionsToIgnoreList.forEach(errorHandler::addNotRetryableExceptions);
         //exceptionsToRetryList.forEach(errorHandler::addRetryableExceptions)
         errorHandler1
