@@ -12,13 +12,15 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.annotation.EnableKafka
 import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
+import java.util.*
+import kotlin.collections.HashMap
 
 @Configuration
 @EnableKafka
 class KafkaProducerConfiguration {
 
     //@Bean
-    fun producerFactory1(): DefaultKafkaProducerFactory<String, GenericRecord> {
+    fun producerFactory(): DefaultKafkaProducerFactory<String, GenericRecord> {
         val configProps: MutableMap<String, Any> = HashMap()
         configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:29092"
         configProps[KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG] = "http://localhost:8085"
@@ -28,15 +30,15 @@ class KafkaProducerConfiguration {
     }
 
     @Bean
-    fun kafkaTemplate1(): KafkaTemplate<String?, GenericRecord> {
-        return KafkaTemplate(producerFactory1())
+    fun kafkaTemplate(): KafkaTemplate<String?, GenericRecord> {
+        return KafkaTemplate(producerFactory())
     }
 
-    private fun buildProducerRecord(key: String?, value: GetClient, topic: String): ProducerRecord<String?, GenericRecord> {
+    fun buildProducerRecord(key: String?, value: GetClient, topic: String): ProducerRecord<String?, GenericRecord> {
         return ProducerRecord(topic, null, key, value, null)
     }
 
     fun sendMessage(client: GetClient, topic: String) {
-        kafkaTemplate1().send(buildProducerRecord("91723981273981", client, topic))
+        kafkaTemplate().send(buildProducerRecord(UUID.randomUUID().toString(), client, topic))
     }
 }

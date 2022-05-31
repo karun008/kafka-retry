@@ -1,34 +1,8 @@
 package com.asurint.keystone.kafkaretrytest.entity
 
-import com.course.avro.data.GetClient
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.repository.CrudRepository
 import org.springframework.stereotype.Repository
-import org.springframework.stereotype.Service
 import javax.persistence.*
-import javax.transaction.Transactional
-
-@Service
-class FailureService() {
-    @Autowired
-    lateinit var failureRecordRepository: FailureRecordRepository
-
-    @Transactional
-    fun saveFailedRecord(consumerRecord: ConsumerRecord<String?, GetClient>, e: Exception, status: String?) {
-        val failureRecord = FailureRecord(
-            null,
-            consumerRecord.topic(),
-            consumerRecord.key(),
-            consumerRecord.value().toString(),
-            consumerRecord.partition(),
-            consumerRecord.offset(),
-            e.cause!!.message,
-            status
-        )
-        failureRecordRepository.save(failureRecord)
-    }
-}
 
 @Repository
 interface FailureRecordRepository : CrudRepository<FailureRecord?, Int?> {
