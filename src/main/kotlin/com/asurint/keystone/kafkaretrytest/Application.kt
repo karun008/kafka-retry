@@ -1,6 +1,5 @@
 package com.asurint.keystone.kafkaretrytest
 
-import com.asurint.keystone.kafkaretrytest.configuration.KafkaProducerConfiguration
 import com.asurint.keystone.kafkaretrytest.service.ProducerService
 import com.course.avro.data.GetClient
 import org.springframework.boot.SpringApplication

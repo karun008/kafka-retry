@@ -20,8 +20,6 @@ class ProducerService {
     private lateinit var kafkaProducerConfig: KafkaProducerConfiguration
 
     fun sendMessage(client: GetClient, topic: String) {
-        client.setFileurl(awsS3Service.generatePreSignedUrl("test.txt", "kafka-bucket",
-            HttpMethod.PUT))
         kafkaProducerConfig.sendMessage(client, topic)
     }
 
