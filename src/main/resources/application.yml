@@ -15,16 +15,15 @@ spring:
     template:
       default-topic: local.accounts
     consumer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: localhost:29092
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
-      group-id: events-listener-group
+      group-id: events-listener-group-1
       properties:
         schema.registry.url: http://localhost:8085
-        specific.avro.reader: true
     producer:
       bootstrap-servers:
-        -   localhost:9092
+        -   localhost:29092
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
     properties:
