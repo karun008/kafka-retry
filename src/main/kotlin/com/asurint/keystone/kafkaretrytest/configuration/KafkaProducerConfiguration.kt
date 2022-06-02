@@ -12,31 +12,48 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.annotation.EnableKafka
 import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.kafka.transaction.KafkaTransactionManager
+import org.springframework.transaction.support.AbstractPlatformTransactionManager
+import java.util.*
+import kotlin.collections.HashMap
 
 @Configuration
 @EnableKafka
 class KafkaProducerConfiguration {
 
-    //@Bean
-    fun producerFactory1(): DefaultKafkaProducerFactory<String, GenericRecord> {
+    @Bean
+    fun producerFactory(): DefaultKafkaProducerFactory<String, GenericRecord> {
         val configProps: MutableMap<String, Any> = HashMap()
-        configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
+        configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:29092"
         configProps[KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG] = "http://localhost:8085"
         configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
         configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = KafkaAvroSerializer::class.java
-        return DefaultKafkaProducerFactory(configProps)
+        var kpf : DefaultKafkaProducerFactory<String, GenericRecord> =  DefaultKafkaProducerFactory(configProps)
+        //kpf.transactionCapable()
+        kpf.setTransactionIdPrefix("tx-")
+        return kpf
     }
+
 
     @Bean
-    fun kafkaTemplate1(): KafkaTemplate<String?, GenericRecord> {
-        return KafkaTemplate(producerFactory1())
+    fun kafkaTransactionManager(): KafkaTransactionManager<*, *>? {
+        val ktm: KafkaTransactionManager<*, *> = KafkaTransactionManager<String?, GenericRecord?>(producerFactory())
+        ktm.transactionSynchronization = AbstractPlatformTransactionManager.SYNCHRONIZATION_ALWAYS
+        return ktm
     }
 
-    private fun buildProducerRecord(key: String?, value: GetClient, topic: String): ProducerRecord<String?, GenericRecord> {
+
+    @Bean
+    fun kafkaTemplate(): KafkaTemplate<String?, GenericRecord> {
+        var kt : KafkaTemplate<String?, GenericRecord> = KafkaTemplate(producerFactory())
+        return kt
+    }
+
+    fun buildProducerRecord(key: String?, value: GetClient, topic: String): ProducerRecord<String?, GenericRecord> {
         return ProducerRecord(topic, null, key, value, null)
     }
 
     fun sendMessage(client: GetClient, topic: String) {
-        kafkaTemplate1().send(buildProducerRecord("91723981273981", client, topic))
+        kafkaTemplate().send(buildProducerRecord(UUID.randomUUID().toString(), client, topic))
     }
 }

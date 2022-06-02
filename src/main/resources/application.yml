@@ -2,10 +2,17 @@ spring:
   profiles:
     active: local
 server:
-  port: 8082
+  port: 8081
 topics:
   retry: 'local.accounts.retry'
   dlt: 'local.accounts.dlq'
+
+
+amazon:
+  aws:
+    access-key: 'qwe'
+    secret-key": 'qwe'
+    region: 'ap-southeast-2'
 
 ---
 spring:
@@ -15,28 +22,35 @@ spring:
     template:
       default-topic: local.accounts
     consumer:
-      bootstrap-servers: localhost:9092
+      bootstrap-servers: localhost:29092
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
       group-id: events-listener-group
       properties:
         schema.registry.url: http://localhost:8085
-        specific.avro.reader: true
+      enable-auto-commit: false
+      isolation-level: read_committed
+      auto-offset-reset: earliest
     producer:
       bootstrap-servers:
-        -   localhost:9092
+        -   localhost:29092
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
-    properties:
-      schema.registry.url: http://localhost:8085
-      specific.avro.reader: true
-  datasource:
-    url: jdbc:h2:mem:testdb
+      properties:
+        schema.registry.url: http://localhost:8085
+      transaction-id-prefix: tx-
+
   jpa:
-    database: h2
-    database-platform: org.hibernate.dialect.H2Dialect
-    generate-ddl: true
-  h2:
-    console:
-      enabled: true
+    database: POSTGRESQL
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+  datasource:
+    url: jdbc:postgresql://localhost:5432/camunda
+    username: camunda
+    password: camunda
+    driverClassName: org.postgresql.Driver
+  sql:
+    init:
+      platform: postgres
 
