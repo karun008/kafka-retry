@@ -5,7 +5,7 @@
   "doc": "Sample default value",
   "fields": [
     {
-      "name": "fullName",
+      "name": "fullname",
       "type": "string"
     },
     {

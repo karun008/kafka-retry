@@ -20,16 +20,20 @@ spring:
       value-deserializer: io.confluent.kafka.serializers.KafkaAvroDeserializer
       group-id: events-listener-group
       properties:
-        schema.registry.url: http://localhost:8085
+        schema.registry.url: http://localhost:8081
         specific.avro.reader: true
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: io.confluent.kafka.serializers.KafkaAvroDeserializer
     producer:
       bootstrap-servers:
         -   localhost:9092
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
-    properties:
-      schema.registry.url: http://localhost:8085
-      specific.avro.reader: true
+      properties:
+        schema.registry.url: http://localhost:8081
+        specific.avro.reader: true
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: io.confluent.kafka.serializers.KafkaAvroDeserializer
   datasource:
     url: jdbc:h2:mem:testdb
   jpa:

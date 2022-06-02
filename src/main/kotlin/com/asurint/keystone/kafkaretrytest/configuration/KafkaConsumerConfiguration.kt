@@ -2,11 +2,13 @@ package com.asurint.keystone.kafkaretrytest.configuration
 
 
 import com.course.avro.data.GetClient
+import io.confluent.kafka.serializers.KafkaAvroDeserializer
 import io.confluent.kafka.serializers.KafkaAvroSerializer
 import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.ProducerConfig
 import org.apache.kafka.clients.producer.ProducerRecord
+import org.apache.kafka.common.serialization.StringDeserializer
 import org.apache.kafka.common.serialization.StringSerializer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -22,15 +24,12 @@ import org.springframework.kafka.core.DefaultKafkaConsumerFactory
 import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
 import org.springframework.kafka.listener.ConsumerRecordRecoverer
-import org.springframework.kafka.listener.DeadLetterPublishingRecoverer
 import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.listener.RetryListener
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries
-import org.springframework.util.backoff.FixedBackOff
+import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+import org.springframework.kafka.support.serializer.JsonDeserializer
 
-
-const val BACK_OFF_PERIOD: Long = 1000L // should not be longer than max.poll.interval.ms
-const val MAX_ATTEMPTS: Int = 1
 
 private fun buildProducerRecord(key: String?, value: GetClient, topic: String): ProducerRecord<String?, GetClient>? {
 //add headers if needed
@@ -48,6 +47,39 @@ class KafkaConsumerConfiguration {
     @Value("\${topics.dlt}")
     private val deadLetterTopic: String? = "local.accounts.dlq"
 
+    @Bean
+    fun kafkaListenerContainerFactory(properties: KafkaProperties): ConcurrentKafkaListenerContainerFactory<String?, GetClient?> {
+        val factory = ConcurrentKafkaListenerContainerFactory<String?, GetClient?>()
+        factory.consumerFactory = consumerFactory(properties)
+        factory.setCommonErrorHandler(errorHandler(properties)!!)
+        return factory
+    }
+
+    @Bean
+    fun consumerFactory(properties: KafkaProperties): ConsumerFactory<String?, GetClient?> {
+        //var stringDeserializer: StringDeserializer = StringDeserializer()
+        return DefaultKafkaConsumerFactory(properties.buildConsumerProperties())
+    }
+
+    fun errorHandler(kafkaProperties: KafkaProperties): DefaultErrorHandler? {
+
+        val expBackOff = ExponentialBackOffWithMaxRetries(1)
+        expBackOff.initialInterval = 1000L
+        expBackOff.multiplier = 2.0
+        expBackOff.maxInterval = 40000L
+
+        val errorHandlerCustom = DefaultErrorHandler(consumerRecordRecoverer, expBackOff)
+        errorHandlerCustom
+            .setRetryListeners(RetryListener { record: ConsumerRecord<*, *>?, ex: Exception, deliveryAttempt: Int ->
+                logger.info(
+                    "Failed Record in Retry Listener, Exception : {} , deliveryAttempt : {} ",
+                    ex.message,
+                    deliveryAttempt
+                )
+            })
+        return errorHandlerCustom
+    }
+
     var consumerRecordRecoverer = ConsumerRecordRecoverer { consumerRecord: ConsumerRecord<*, *>?, e: Exception ->
         logger.info("Exception in consumerRecordRecoverer : {} ", e.message, e)
         val record = consumerRecord as ConsumerRecord<String?, GetClient>?
@@ -58,7 +90,6 @@ class KafkaConsumerConfiguration {
             if (producerRecord != null) {
                 kafkaTemplate().send(producerRecord)
             }
-            //failureService.saveFailedRecord(record, e, com.learnkafka.config.LibraryEventsConsumerConfig.RETRY)
            // failureService!!.saveFailedRecord(record, e, retryTopic)
         } else {
             // non-recovery logic
@@ -67,7 +98,7 @@ class KafkaConsumerConfiguration {
             if (producerRecord != null) {
                 kafkaTemplate().send(producerRecord)
             }
-            //failureService.saveFailedRecord(record, e, com.learnkafka.config.LibraryEventsConsumerConfig.DEAD)
+            // failureService!!.saveFailedRecord(record, e, deadLetterTopic)
         }
     }
 
@@ -77,7 +108,10 @@ class KafkaConsumerConfiguration {
         configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
         configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
         configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = KafkaAvroSerializer::class.java
-        configProps[KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG] = "http://localhost:8085"
+        configProps[KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG] = "http://localhost:8081"
+        //configProps.put(ProducerConfig.MAX_REQUEST_SIZE_CONFIG, "20971520");
+        //compression settings
+        //max request size
         return DefaultKafkaProducerFactory(configProps)
     }
 
@@ -86,46 +120,7 @@ class KafkaConsumerConfiguration {
         return KafkaTemplate(producerFactory())
     }
 
-    fun errorHandler(kafkaProperties: KafkaProperties): DefaultErrorHandler? {
-        /* val exceptionsToIgnoreList: Unit = List.of(
-            IllegalArgumentException::class.java
-        )
-        val exceptionsToRetryList: Unit = List.of(
-            RecoverableDataAccessException::class.java
-        )*/
-        val fixedBackOff = FixedBackOff(1000L, 1)
-        val expBackOff = ExponentialBackOffWithMaxRetries(MAX_ATTEMPTS)
-        expBackOff.initialInterval = 1000L
-        expBackOff.multiplier = 4.0
-        expBackOff.maxInterval = 40000L
 
-        var defaultKafkaProducerFactory:DefaultKafkaProducerFactory<String, String>
-            = DefaultKafkaProducerFactory(kafkaProperties.buildProducerProperties())
 
-        val errorHandler1 = DefaultErrorHandler(DeadLetterPublishingRecoverer( kafkaTemplate()), expBackOff)
 
-        //exceptionsToIgnoreList.forEach(errorHandler::addNotRetryableExceptions);
-        //exceptionsToRetryList.forEach(errorHandler::addRetryableExceptions)
-        errorHandler1
-            .setRetryListeners(RetryListener { record: ConsumerRecord<*, *>?, ex: Exception, deliveryAttempt: Int ->
-                logger.info(
-                    "Failed Record in Retry Listener, Exception : {} , deliveryAttempt : {} ",
-                    ex.message,
-                    deliveryAttempt
-                )
-            })
-        return errorHandler1
-    }
-
-    @Bean
-    fun consumerFactory(properties: KafkaProperties): ConsumerFactory<String?, GetClient?> =
-        DefaultKafkaConsumerFactory(properties.buildConsumerProperties())
-
-    @Bean
-    fun kafkaListenerContainerFactory(properties: KafkaProperties): ConcurrentKafkaListenerContainerFactory<String?, GetClient?> {
-        val factory = ConcurrentKafkaListenerContainerFactory<String?, GetClient?>()
-        factory.consumerFactory = consumerFactory(properties)
-        factory.setCommonErrorHandler(errorHandler(properties)!!)
-        return factory
-    }
 }
