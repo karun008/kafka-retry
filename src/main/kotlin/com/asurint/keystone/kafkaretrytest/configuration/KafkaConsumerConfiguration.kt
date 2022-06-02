@@ -22,6 +22,8 @@ import org.springframework.kafka.listener.ConsumerRecordRecoverer
 import org.springframework.kafka.listener.DefaultErrorHandler
 import org.springframework.kafka.listener.RetryListener
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries
+import org.springframework.kafka.transaction.KafkaTransactionManager
+import org.springframework.transaction.support.AbstractPlatformTransactionManager
 import org.springframework.util.backoff.FixedBackOff
 
 
@@ -36,6 +38,9 @@ class KafkaConsumerConfiguration {
 
     @Autowired
     private lateinit var producerService: ProducerService
+
+    @Autowired
+    private lateinit var kafkaProducerConfiguration: KafkaProducerConfiguration
 
     @Value("\${topics.retry}")
     private val retryTopic: String? = "local.accounts.retry"
@@ -101,6 +106,7 @@ class KafkaConsumerConfiguration {
         val factory = ConcurrentKafkaListenerContainerFactory<String?, GetClient?>()
         factory.consumerFactory = consumerFactory(properties)
         factory.setCommonErrorHandler(errorHandler(properties)!!)
+        factory.containerProperties.transactionManager = kafkaProducerConfiguration.kafkaTransactionManager()
         return factory
     }
 }

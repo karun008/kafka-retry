@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Configuration
 import org.springframework.kafka.annotation.EnableKafka
 import org.springframework.kafka.core.DefaultKafkaProducerFactory
 import org.springframework.kafka.core.KafkaTemplate
+import org.springframework.kafka.transaction.KafkaTransactionManager
+import org.springframework.transaction.support.AbstractPlatformTransactionManager
 import java.util.*
 import kotlin.collections.HashMap
 
@@ -19,19 +21,32 @@ import kotlin.collections.HashMap
 @EnableKafka
 class KafkaProducerConfiguration {
 
-    //@Bean
+    @Bean
     fun producerFactory(): DefaultKafkaProducerFactory<String, GenericRecord> {
         val configProps: MutableMap<String, Any> = HashMap()
         configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:29092"
         configProps[KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG] = "http://localhost:8085"
         configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
         configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = KafkaAvroSerializer::class.java
-        return DefaultKafkaProducerFactory(configProps)
+        var kpf : DefaultKafkaProducerFactory<String, GenericRecord> =  DefaultKafkaProducerFactory(configProps)
+        //kpf.transactionCapable()
+        kpf.setTransactionIdPrefix("tx-")
+        return kpf
     }
+
+
+    @Bean
+    fun kafkaTransactionManager(): KafkaTransactionManager<*, *>? {
+        val ktm: KafkaTransactionManager<*, *> = KafkaTransactionManager<String?, GenericRecord?>(producerFactory())
+        ktm.transactionSynchronization = AbstractPlatformTransactionManager.SYNCHRONIZATION_ALWAYS
+        return ktm
+    }
+
 
     @Bean
     fun kafkaTemplate(): KafkaTemplate<String?, GenericRecord> {
-        return KafkaTemplate(producerFactory())
+        var kt : KafkaTemplate<String?, GenericRecord> = KafkaTemplate(producerFactory())
+        return kt
     }
 
     fun buildProducerRecord(key: String?, value: GetClient, topic: String): ProducerRecord<String?, GenericRecord> {

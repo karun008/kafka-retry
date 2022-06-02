@@ -28,15 +28,18 @@ spring:
       group-id: events-listener-group
       properties:
         schema.registry.url: http://localhost:8085
-        specific.avro.reader: true
+      enable-auto-commit: false
+      isolation-level: read_committed
+      auto-offset-reset: earliest
     producer:
       bootstrap-servers:
         -   localhost:29092
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: io.confluent.kafka.serializers.KafkaAvroSerializer
-    properties:
-      schema.registry.url: http://localhost:8085
-      specific.avro.reader: true
+      properties:
+        schema.registry.url: http://localhost:8085
+      transaction-id-prefix: tx-
+
   jpa:
     database: POSTGRESQL
     show-sql: true
