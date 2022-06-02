@@ -78,7 +78,7 @@ class KafkaConsumerConfiguration {
     @Bean
     fun producerFactory(): DefaultKafkaProducerFactory<Any?, Any?> {
         val configProps: MutableMap<String, Any> = HashMap()
-        configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:29092"
+        configProps[ProducerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
         configProps[ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG] = StringSerializer::class.java
         configProps[ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG] = KafkaAvroSerializer::class.java
         configProps[KafkaAvroSerializerConfig.SCHEMA_REGISTRY_URL_CONFIG] = "http://localhost:8085"
@@ -128,7 +128,7 @@ class KafkaConsumerConfiguration {
     @Bean
     fun consumerFactory(properties: KafkaProperties): ConsumerFactory<String?, GetClient?> {
         val configProps: MutableMap<String, Any> = HashMap()
-        configProps[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:29092"
+        configProps[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = "localhost:9092"
         configProps[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java
         configProps[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = KafkaAvroDeserializer::class.java
         configProps[ConsumerConfig.GROUP_ID_CONFIG] = "events-listener-group"
