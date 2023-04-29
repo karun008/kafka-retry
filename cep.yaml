@@ -1,0 +1,1301 @@
+openapi: 3.0.0
+info:
+  title: Cloud Endpoints for the Customer Engagement Platform V2 ${cep_namespace}
+  description: API which allows sending targeting in-app messages to Dexcom users
+  version: 1.0.0
+x-google-endpoints:
+  - name: ${cep_namespace}.endpoints.${project_id}.cloud.goog
+    target: ${static_ip}
+    allowCors: "true"
+security:
+  - testServiceAccount: []
+  - testAdminFrontend: []
+  - dexcom: []
+paths:
+  /v1/admin/campaigns:
+    get:
+      tags:
+        - campaigns
+      operationId: getCampaigns
+      summary: Returns campaigns
+      parameters:
+        - in: query
+          name: status
+          required: false
+          description: Campaign status to filter to
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Campaign"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags:
+        - campaigns
+      operationId: createCampaignEndpoint
+      summary: Create a new campaign
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Campaign"
+        description: The campaign to create.
+      responses:
+        "201":
+          $ref: "#/components/responses/Campaign"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  "/v1/admin/campaigns/{campaignId}":
+    get:
+      tags:
+        - campaigns
+      summary: Get a campaign
+      operationId: getCampaign
+      parameters:
+        - in: path
+          name: campaignId
+          required: true
+          description: The campaign ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          $ref: "#/components/responses/Campaign"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags:
+        - campaigns
+      summary: Delete a campaign
+      operationId: deleteCampaign
+      parameters:
+        - in: path
+          name: campaignId
+          required: true
+          description: The campaign ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Successfully deleted campaign
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags:
+        - campaigns
+      summary: Update a campaign
+      operationId: updateCampaignEndpoint
+      responses:
+        "200":
+          $ref: "#/components/responses/Campaign"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+      parameters:
+        - in: path
+          name: campaignId
+          required: true
+          description: The campaign ID
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Campaign"
+        description: The campaign to update.
+        required: true
+  "/v1/admin/campaigns/{campaignId}/size":
+    get:
+      tags:
+        - campaigns
+      summary: Get an estimate of the campaign's audience size.
+      operationId: getCampaignSize
+      parameters:
+        - in: path
+          name: campaignId
+          required: true
+          description: The campaign ID
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          $ref: "#/components/responses/SizeEstimate"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  "/v1/admin/campaigns/{campaignId}/analytics":
+    get:
+      tags:
+        - campaigns
+      summary: Get analytics about a campaign.
+      operationId: getCampaignAnalytics
+      parameters:
+        - in: path
+          name: campaignId
+          required: true
+          description: The campaign ID
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: startDate
+          description: Start of date range to calculate analytics
+          schema:
+            type: string
+        - in: query
+          name: endDate
+          description: End of date range to calculate analytics
+          schema:
+            type: string
+        - in: query
+          name: region
+          description: Region to filter by
+          schema:
+            type: string
+        - in: query
+          name: platform
+          description: Platform to filter by
+          schema:
+            type: string
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AnalyticSummary"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/admin/campaigns/regions:
+    get:
+      tags:
+        - campaigns
+      summary: Get all region values seen
+      operationId: getRegions
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/admin/campaigns/platforms:
+    get:
+      tags:
+        - campaigns
+      summary: Get all platform values seen
+      operationId: getPlatforms
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/admin/campaigns/size:
+    post:
+      tags:
+        - campaigns
+      summary: Get an estimate of the campaign's audience size.
+      operationId: getEstimatedCampaignSize
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Campaign"
+        description: The campaign for which you want a size estimate.
+      responses:
+        "200":
+          $ref: "#/components/responses/SizeEstimate"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/admin/ingestableProperties:
+    get:
+      tags:
+        - ingestableProperties
+      operationId: getIngestableProperties
+      summary: Returns Ingestable Properties
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/IngestableProperty"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /v1/admin/settings:
+    get:
+      tags:
+        - settings
+      operationId: getSettings
+      summary: Returns global settings for CEP platform
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Setting"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  "/v1/admin/settings/{settingName}":
+    patch:
+      tags:
+        - settings
+      operationId: updateSetting
+      summary: Update a global setting
+      parameters:
+        - in: path
+          name: settingName
+          required: true
+          description: The setting name
+          schema:
+            type: string
+            maxLength: 32
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                value:
+                  type: string
+        description: The setting value
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Setting"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  "/v1/admin/users/{userId}":
+    delete:
+      tags:
+        - users
+      summary: Deletes all of a user's data
+      operationId: deleteUserData
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: The user ID
+          schema:
+            type: string
+            maxLength: 64
+      responses:
+        "204":
+          description: The user and associated data was deleted successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  "/v1/admin/users/{userId}/data":
+    get:
+      tags:
+        - users
+      summary: Retrieve all of a user's data
+      operationId: getUserData
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: The user ID
+          schema:
+            type: string
+            maxLength: 64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserData"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  "/v1/users/{userId}/messages":
+    get:
+      tags:
+        - users
+      summary: Returns messages to be displayed to a user
+      operationId: getMessages
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: The user ID
+          schema:
+            type: string
+            maxLength: 64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Message"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  "/v1/users/{userId}/messages/ack":
+    post:
+      tags:
+        - users
+      summary: Ack new messages were received
+      operationId: ackMessages
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: The user ID
+          schema:
+            type: string
+            maxLength: 64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ids:
+                  type: array
+                  items:
+                    type: integer
+                    format: int64
+        description: The list of received message ids
+        required: true
+      responses:
+        "201":
+          description: Created
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  "/v1/users/{userId}/messages/{messageId}/events":
+    post:
+      tags:
+        - users
+      summary: Log a message interaction event
+      operationId: createEvent
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: The user ID
+          schema:
+            type: string
+            maxLength: 64
+        - in: path
+          name: messageId
+          required: true
+          description: The message ID
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                eventType:
+                  $ref: "#/components/schemas/SaveEventType"
+        description: The type of interaction event
+        required: true
+      responses:
+        "201":
+          description: Created
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  "/v1/admin/users/{userId}/properties":
+    get:
+      tags:
+        - users
+      summary: Returns properties that have been ingested for a user
+      operationId: getProperties
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: The user ID
+          schema:
+            type: string
+            maxLength: 64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/UserProperty"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  "/v1/users/{userId}/properties":
+    post:
+      tags:
+        - users
+      summary: Supply properties to ingest for a user
+      operationId: createProperties
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: The user ID
+          schema:
+            type: string
+            maxLength: 64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: string
+                  description: A json formatted string of name-value pairs
+        description: The properties to ingest
+        required: true
+      responses:
+        "201":
+          description: Created
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/admin/audiences:
+    get:
+      tags:
+        - audiences
+      summary: Returns all Audiences
+      operationId: getAudiences
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Audience"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+    post:
+      tags:
+        - audiences
+      summary: Create a new Audience
+      operationId: createAudience
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Audience"
+        description: The audience to create.
+        required: true
+      responses:
+        "201":
+          $ref: "#/components/responses/Audience"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  "/v1/admin/audiences/{audienceId}/active_campaigns":
+    get:
+      tags:
+        - audiences
+      summary: Check if an audience has active campaigns
+      operationId: getActiveCampaigns
+      parameters:
+        - in: path
+          name: audienceId
+          required: true
+          description: The audience Id
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Campaign"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  "/v1/admin/audiences/{audienceId}":
+    get:
+      tags:
+        - audiences
+      summary: Get an audience
+      operationId: getAudience
+      parameters:
+        - in: path
+          name: audienceId
+          required: true
+          description: The audience Id
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "200":
+          $ref: "#/components/responses/Audience"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    patch:
+      tags:
+        - audiences
+      summary: Update an audience description
+      operationId: updateAudience
+      parameters:
+        - in: path
+          name: audienceId
+          required: true
+          description: The audience Id
+          schema:
+            type: integer
+            format: int64
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Audience"
+        description: The audience to update with rules
+        required: true
+      responses:
+        "200":
+          $ref: "#/components/responses/Audience"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+    delete:
+      tags:
+        - audiences
+      summary: Delete an audience and its rules
+      operationId: deleteAudience
+      parameters:
+        - in: path
+          name: audienceId
+          required: true
+          description: The audience Id
+          schema:
+            type: integer
+            format: int64
+      responses:
+        "204":
+          description: Successfully deleted audience
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/admin/audiences/size:
+    post:
+      tags:
+        - audiences
+      summary: Get an estimate of an audience's size.
+      operationId: getEstimatedAudienceSize
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Audience"
+        description: The audience for which you want a size estimate.
+      responses:
+        "200":
+          $ref: "#/components/responses/SizeEstimate"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/admin/audiences/size/refresh:
+    get:
+      tags:
+        - audiences
+      summary: Refreshes the size estimate for all audiences.
+      operationId: refreshAudienceSizeEstimates
+      responses:
+        "200":
+          description: OK
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+  /v1/admin/logs/csv:
+    get:
+      tags:
+        - logs
+      summary: CSV File of auditlogs, sorted by most recent
+      operationId: getAuditLogCsv
+      responses:
+        "200":
+          description: CSV file of all AuditLogs
+          content:
+            text/csv:
+              schema:
+                type: string
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /v1/admin/logs:
+    get:
+      tags:
+        - logs
+      parameters:
+        - in: query
+          name: adminUser
+          description: The user who produced the logs
+          schema:
+            type: string
+            maxLength: 64
+        - in: query
+          name: minTimestamp
+          description: Greater than or equal to this timestamp
+          schema:
+            type: string
+        - in: query
+          name: maxTimestamp
+          description: Less than or equal to this timestamp
+          schema:
+            type: string
+        - in: query
+          name: audienceId
+          description: Audience ID
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: campaignId
+          description: Campaign ID
+          schema:
+            type: integer
+            format: int64
+        - in: query
+          name: settingName
+          description: Setting name
+          schema:
+            type: string
+        - in: query
+          name: sort
+          description: Sort direction, asc or desc
+          schema:
+            type: string
+        - in: query
+          name: sortBy
+          description: Field to sort by, defaults to Time
+          schema:
+            type: string
+        - in: query
+          name: pageSize
+          description: Number of results to return
+          schema:
+            type: integer
+        - in: query
+          name: pageNumber
+          description: Page number to return
+          schema:
+            type: integer
+        - in: query
+          name: type
+          description: Type of log
+          schema:
+            type: string
+      operationId: getLogs
+      summary: Returns audit logs
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AuditLog"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "403":
+          $ref: "#/components/responses/Forbidden"
+  /v1/monitoring/liveness_check:
+    get:
+      security: []
+      tags:
+        - monitoring
+      operationId: livenessCheck
+      responses:
+        "200":
+          description: OK
+  /v1/monitoring/certificate_health:
+    get:
+      security: []
+      tags:
+        - monitoring
+      operationId: certificateHealthCheck
+      responses:
+        "200":
+          description: OK
+        "406":
+          description: Not Acceptable
+servers:
+  - url: https://${cep_namespace}.endpoints.${project_id}.cloud.goog
+    variables:
+      cep_namespace:
+        default: unknown
+      project_id:
+        default: unknown
+components:
+  responses:
+    Audience:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Audience"
+    BadRequest:
+      description: ErrorResponse
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Campaign:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Campaign"
+    SizeEstimate:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/SizeEstimate"
+    Setting:
+      description: OK
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Setting"
+    NotFound:
+      description: The requested resource was not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  securitySchemes:
+    testServiceAccount:
+      type: oauth2
+      x-google-issuer: tokencreator@${project_id}.iam.gserviceaccount.com
+      x-google-jwks_uri: https://www.googleapis.com/robot/v1/metadata/x509/tokencreator@${project_id}.iam.gserviceaccount.com
+      x-google-audiences: ${project_id}
+      flows:
+        implicit:
+          authorizationUrl: /
+          scopes: {}
+    testAdminFrontend:
+      type: oauth2
+      x-google-issuer: https://securetoken.google.com/${project_id}
+      x-google-jwks_uri: https://www.googleapis.com/service_accounts/v1/metadata/x509/securetoken@system.gserviceaccount.com
+      x-google-audiences: ${project_id}
+      flows:
+        implicit:
+          authorizationUrl: /
+          scopes: {}
+    dexcom:
+      type: oauth2
+      x-google-issuer: https://dev1-us-dev-keycloak.dexcomdev.com/auth/realms/Dexcom
+      x-google-jwks_uri: https://dev1-us-dev-keycloak.dexcomdev.com/auth/realms/dexcom/protocol/openid-connect/certs
+      x-google-audiences: ${cep_namespace}.endpoints.${project_id}.cloud.goog
+      flows:
+        implicit:
+          authorizationUrl: /
+          scopes: {}
+  schemas:
+    AnalyticSummary:
+      type: object
+      properties:
+        eventType:
+          $ref: "#/components/schemas/EventType"
+        eventCount:
+          type: integer
+          format: int64
+    Audience:
+      type: object
+      properties:
+        audienceId:
+          type: integer
+          format: int64
+        audienceName:
+          type: string
+        description:
+          type: string
+        rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/AudienceRule"
+        lastModifiedAt:
+          type: string
+          readOnly: true
+        createdAt:
+          type: string
+          readOnly: true
+        author:
+          type: string
+          readOnly: true
+        sizeEstimate:
+          $ref: "#/components/schemas/SizeEstimate"
+        deleted:
+          type: boolean
+          readOnly: true
+    AudienceRule:
+      type: object
+      required:
+        - propertyName
+      properties:
+        ruleId:
+          type: integer
+          format: int64
+        propertyName:
+          type: string
+        currentComparatorType:
+          $ref: "#/components/schemas/ComparatorType"
+        currentComparatorValue:
+          type: string
+        previousComparatorType:
+          $ref: "#/components/schemas/ComparatorType"
+        previousComparatorValue:
+          type: string
+    AuditLog:
+      type: object
+      properties:
+        adminUser:
+          type: string
+        time:
+          type: string
+        type:
+          $ref: "#/components/schemas/AuditType"
+        previousValue:
+          type: string
+        newValue:
+          type: string
+        audienceId:
+          type: integer
+          format: int64
+        campaignId:
+          type: integer
+          format: int64
+        settingName:
+          $ref: "#/components/schemas/SettingName"
+    Button:
+      type: object
+      properties:
+        title:
+          type: string
+        actionUrl:
+          type: string
+    Campaign:
+      type: object
+      properties:
+        campaignId:
+          type: integer
+          format: int64
+        campaignName:
+          type: string
+        description:
+          type: string
+        status:
+          $ref: "#/components/schemas/CampaignStatus"
+        startTime:
+          type: string
+        endTime:
+          type: string
+        priority:
+          type: integer
+          format: int64
+        audienceId:
+          type: integer
+          format: int64
+        audienceName:
+          type: string
+          readOnly: true
+        audienceIsDeleted:
+          type: boolean
+          readOnly: true
+        consentName:
+          type: string
+        floodControlSeconds:
+          type: integer
+          format: int64
+        messageType:
+          $ref: "#/components/schemas/MessageType"
+        messageTitle:
+          type: string
+        messageBody:
+          type: string
+        messageImageUrl:
+          type: string
+        messageButtonOneTitle:
+          type: string
+        messageButtonOneActionUrl:
+          type: string
+        messageButtonTwoTitle:
+          type: string
+        messageButtonTwoActionUrl:
+          type: string
+        author:
+          type: string
+          readOnly: true
+        lastModifiedAt:
+          type: string
+          readOnly: true
+        createdAt:
+          type: string
+          readOnly: true
+    SizeEstimate:
+      type: object
+      properties:
+        percent:
+          type: integer
+          description: The estimated % of active users reached by a campaign.
+        marginOfError:
+          type: integer
+          description: The margin of error of the estimate with a 95% confidence level.
+        estimatedAt:
+          type: string
+          description: When this estimate was produced at.
+          readOnly: true
+    CampaignStatus:
+      type: string
+      enum:
+        - ACTIVE
+        - PAUSED
+        - DELETED
+    CampaignAnalytics:
+      type: object
+      required:
+        - campaignId
+      properties:
+        campaignId:
+          type: integer
+          format: int64
+        eventType:
+          $ref: "#/components/schemas/EventType"
+        platform:
+          type: string
+        region:
+          type: string
+        countDate:
+          type: string
+        eventCount:
+          type: integer
+          format: int64
+    AuditType:
+      type: string
+      enum:
+        - CREATE_AUDIENCE
+        - UPDATE_AUDIENCE
+        - DELETE_AUDIENCE
+        - CREATE_CAMPAIGN
+        - UPDATE_CAMPAIGN
+        - DELETE_CAMPAIGN
+        - UPDATE_SETTING
+    MessageType:
+      type: string
+      enum:
+        - DISPLAY
+        - CONFIGURATION
+    ComparatorType:
+      type: string
+      enum:
+        - LESS_THAN
+        - LESS_THAN_OR_EQUAL_TO
+        - GREATER_THAN
+        - GREATER_THAN_OR_EQUAL_TO
+        - EQUAL_TO
+        - NOT_EQUAL_TO
+    PropertyType:
+      type: string
+      enum:
+        - STRING
+        - LONG
+        - DOUBLE
+        - TIMESTAMP
+        - BOOLEAN
+    EventLog:
+      type: object
+      properties:
+        userId:
+          type: string
+        campaignId:
+          type: integer
+          format: int64
+        type:
+          $ref: "#/components/schemas/EventType"
+        time:
+          type: string
+        processed:
+          type: boolean
+    IngestableProperty:
+      type: object
+      required:
+        - name
+        - type
+        - isClientWhitelisted
+      properties:
+        name:
+          type: string
+        type:
+          $ref: "#/components/schemas/PropertyType"
+        isClientWhitelisted:
+          type: boolean
+    EventType:
+      type: string
+      enum:
+        - MESSAGE_RECEIVED
+        - MESSAGE_DISPLAYED
+        - MESSAGE_CLOSED
+        - BUTTON1_CLICKED
+        - BUTTON2_CLICKED
+    SaveEventType:
+      type: string
+      enum:
+        - MESSAGE_DISPLAYED
+        - MESSAGE_CLOSED
+        - BUTTON1_CLICKED
+        - BUTTON2_CLICKED
+    UserData:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            $ref: "#/components/schemas/EventLog"
+        userProperties:
+          type: array
+          items:
+            $ref: "#/components/schemas/UserProperty"
+    UserProperty:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+    Message:
+      type: object
+      properties:
+        id:
+          type: string
+        displayMessage:
+          type: object
+          properties:
+            title:
+              type: string
+            body:
+              type: string
+            imageUrl:
+              type: string
+            button1:
+              $ref: "#/components/schemas/Button"
+            button2:
+              $ref: "#/components/schemas/Button"
+        configurationMessage:
+          type: string
+    Setting:
+      type: object
+      properties:
+        name:
+          $ref: "#/components/schemas/SettingName"
+        value:
+          type: string
+    SettingName:
+      type: string
+      enum:
+        - FLOOD_CONTROL_SECS
+        - AUDIENCE_SIZE_WARNING_PCT
+    ErrorResponse:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
